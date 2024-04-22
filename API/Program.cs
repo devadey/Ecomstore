@@ -1,4 +1,8 @@
 using API.Data;
+using API.Entities;
+using API.Middleware;
+using API.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,14 +19,32 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+builder.Services.AddIdentityCore<User>(opt =>
+    {
+        opt.User.RequireUniqueEmail = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<StoreContext>();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<TokenService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(opt =>
+{
+    opt.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:5800");
+});
 
 app.UseHttpsRedirection();
 
@@ -32,12 +54,13 @@ app.MapControllers();
 
 var scope = app.Services.CreateScope();
 var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
+var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
 try
 {
-    context.Database.Migrate();
-    DbInitializer.Initializer(context);
+    await context.Database.MigrateAsync();
+    await DbInitializer.Initializer(context, userManager);
 }
 catch (Exception ex)
 {

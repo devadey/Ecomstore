@@ -24,7 +24,8 @@ namespace API.Entities
         {
             var item = Items.FirstOrDefault(item => item.ProductId == productId);
 
-            if (Items == null ) return;
+            if (item == null ) return;
+            if (item.Quantity < quantity) return;
             item.Quantity -= quantity;
             if (item.Quantity == 0) Items.Remove(item);
         }

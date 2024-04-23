@@ -46,6 +46,8 @@ builder.Services.AddSwaggerGen(config =>
     });
 });
 
+builder.Services.AddTransient<ExceptionMiddleware>();
+
 
 builder.Services.AddIdentityCore<User>(opt =>
     {
@@ -70,8 +72,9 @@ builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
 
+app.UseFactoryActivatedMiddleware();
 // Configure the HTTP request pipeline.
-app.UseMiddleware<ExceptionMiddleware>();
+
 
 if (app.Environment.IsDevelopment())
 {

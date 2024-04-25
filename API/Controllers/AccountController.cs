@@ -86,6 +86,16 @@ namespace API.Controllers
             };
         }
 
+        [Authorize]
+        [HttpGet("savedAddress")]
+        public async Task<ActionResult<UserAddress>> GetSavedAddress()
+        {
+            return await _context.Users
+                .Where(u => u.UserName == User.Identity.Name)
+                .Select(a => a.Address)
+                .FirstOrDefaultAsync();
+        }
+
         private async Task<Basket> RetrieveBasket(string buyerId)
         {
             if (string.IsNullOrEmpty(buyerId))
